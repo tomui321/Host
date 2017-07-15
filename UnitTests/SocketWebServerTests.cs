@@ -16,6 +16,7 @@ namespace UnitTests
     [TestClass]
     public class SocketWebServerTests
     {
+
         private SocketWebServer _server;
         private Mock<IConfigurationHelper> _configurationHelperMock;
 
