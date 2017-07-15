@@ -72,7 +72,7 @@ namespace WebServer.Servers
                                 }
                             }
                         }
-                        catch(Exception ex)
+                        catch(Exception)
                         {
                             /* log or something in the future */
                         }
