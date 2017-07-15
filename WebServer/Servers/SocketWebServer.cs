@@ -12,10 +12,10 @@ namespace WebServer.Servers
 {
     public class SocketWebServer : IWebServer
     {
-        private readonly Listener _listener;
+        private readonly IListener _listener;
         private readonly IPageLoader _pageLoader;
         
-        public SocketWebServer(IPageLoader pageLoader, Listener listener)
+        public SocketWebServer(IPageLoader pageLoader, IListener listener)
         {
             _pageLoader = pageLoader;
             _listener = listener;
@@ -44,52 +44,65 @@ namespace WebServer.Servers
 
         private void HandleRequests()
         {
-            if (!_listener.Running)
-            {
-                throw new Exception(ErrorMessages.ServerNotRunning);
-            }
-
             ThreadPool.QueueUserWorkItem(o =>
             {
-                Console.WriteLine(@"Socket web server running");
-
-                while (true)
+                while (_listener.Running)
                 {
+                    var acceptedSocket = _listener.Accept();
+
+                    var socket = acceptedSocket as Socket;
+
+                    if (socket == null)
+                        return;
+
                     ThreadPool.QueueUserWorkItem(sct =>
                     {
-                        var client = sct as ISocket;
-
-                        var socket = client?.GetSocket() as Socket;
-
-                        if (socket == null)
-                            return;
-
                         try
                         {
-                            var stream = new NetworkStream(socket);
-                            var reader = new StreamReader(stream);
-                            var writer = new StreamWriter(stream) {AutoFlush = true};
+                            using (var stream = new NetworkStream(socket))
+                            {
+                                using (var reader = new StreamReader(stream))
+                                {
+                                    var request = GetRequest(reader);
 
-                            var request = reader.ReadLine();
+                                    if (request == null)
+                                        return;
 
-                            if (request == null)
-                                return;
-
-                            var deserializedRequest = JsonConvert.DeserializeObject<SimpleProtocolRequest>(request);
-
-                            var requestPath = deserializedRequest.Url.TrimStart(Path.AltDirectorySeparatorChar)
-                                .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-
-                            writer.WriteLine(_pageLoader.LoadContentFromLocalFile(requestPath));
-                            stream.Close();
+                                    Respond(stream, request);
+                                }
+                            }
+                        }
+                        catch(Exception ex)
+                        {
+                            /* log or something in the future */
                         }
                         finally
                         {
-                            client.Close();
+                            socket.Close();
                         }
-                    }, _listener.AcceptSocket());
+                    }, socket);
                 }
             });
+        }
+
+        private SimpleProtocolRequest GetRequest(StreamReader reader)
+        {
+            var request = reader.ReadLine();
+
+            return request == null ? null : JsonConvert.DeserializeObject<SimpleProtocolRequest>(request);
+        }
+
+        private void Respond(NetworkStream stream, SimpleProtocolRequest request)
+        {
+            using (var writer = new StreamWriter(stream) {AutoFlush = true})
+            {
+                var requestPath = request.Url.TrimStart(Path.AltDirectorySeparatorChar)
+                    .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+
+                var responseContent = _pageLoader.LoadContentFromLocalFile(requestPath);
+
+                writer.WriteLine(responseContent);
+            }
         }
     }
 }

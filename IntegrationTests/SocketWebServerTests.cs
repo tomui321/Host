@@ -41,7 +41,7 @@ namespace IntegrationTests
                 .Callback(() => { _requestCount++; });
 
             var socketWebServer = new SocketWebServer(pageLoaderMock.Object,
-                new CustomTcpListener(_configurationHelperMock.Object));
+                new ProxyTcpListener(_configurationHelperMock.Object));
 
             socketWebServer.Run();
 
@@ -70,7 +70,7 @@ namespace IntegrationTests
             });
 
             var socketWebServer = new SocketWebServer(pageLoaderMock.Object,
-                new CustomTcpListener(_configurationHelperMock.Object));
+                new ProxyTcpListener(_configurationHelperMock.Object));
 
             socketWebServer.Run();
 

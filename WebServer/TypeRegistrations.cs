@@ -8,8 +8,7 @@ namespace WebServer
         public static void Register(UnityContainer container)
         {
             container.RegisterType<IWebServer, Servers.SocketWebServer>();
-            container.RegisterType<Listener, CustomTcpListener>();
-            container.RegisterType<ISocket, CustomSocket>();
+            container.RegisterType<IListener, ProxyTcpListener>();
         }
     }
 }

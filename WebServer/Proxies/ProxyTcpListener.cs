@@ -1,13 +1,14 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Net.Sockets;
 using Helpers;
 
 namespace WebServer.Listeners
 {
-    public class CustomTcpListener : Listener
+    public class ProxyTcpListener : IListener
     {
         private readonly TcpListener _listener;
 
-        public CustomTcpListener(IConfigurationHelper configurationHelper)
+        public ProxyTcpListener(IConfigurationHelper configurationHelper)
         {
             var port = configurationHelper.GetPort();
             var server = configurationHelper.GetServer();
@@ -23,14 +24,14 @@ namespace WebServer.Listeners
 
         public override void Stop()
         {
+            Running = false;
             _listener.Server.Close(0);
             _listener.Stop();
-            Running = false;
         }
 
-        public override ISocket AcceptSocket()
+        public override object Accept()
         {
-            return new CustomSocket(_listener.AcceptSocket());
+            return Running ? _listener.AcceptSocket() : null;
         }
     }
 }

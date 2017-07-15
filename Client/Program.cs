@@ -43,8 +43,6 @@ namespace Client
 
                 input = Console.ReadLine();
             }
-
-            Console.ReadLine();
         }
     }
 }

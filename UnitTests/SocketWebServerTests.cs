@@ -1,10 +1,13 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using Helpers;
 using Helpers.Resources;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Newtonsoft.Json;
 using PageLoader;
+using WebServer.Dto;
 using WebServer.Listeners;
 using WebServer.Servers;
 
@@ -25,7 +28,7 @@ namespace UnitTests
 
             var pageLoaderMock = new Mock<IPageLoader>();
 
-            _server = new SocketWebServer(pageLoaderMock.Object, new CustomTcpListener(_configurationHelperMock.Object));
+            _server = new SocketWebServer(pageLoaderMock.Object, new ProxyTcpListener(_configurationHelperMock.Object));
         }
         
         [TestMethod]
